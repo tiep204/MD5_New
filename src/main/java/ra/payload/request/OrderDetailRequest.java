@@ -1,24 +1,20 @@
-package ra.model.entity;
+package ra.payload.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ra.model.entity.Order;
+import ra.model.entity.Product;
 
-import javax.persistence.*;
-
-@Entity
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "order_detail")
-@Builder
-public class OrderDetails {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int orderDetailID;
-    @ManyToOne
-    @JoinColumn(name = "id")
+public class OrderDetailRequest {
     private Order order;
     @ManyToOne
     @JoinColumn(name = "product_id")

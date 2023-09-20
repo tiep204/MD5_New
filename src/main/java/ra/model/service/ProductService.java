@@ -2,7 +2,9 @@ package ra.model.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.method.P;
 import ra.model.entity.Product;
+import ra.payload.request.ProductRequest;
 import ra.payload.response.ProductDTO;
 import ra.payload.response.ProductShort;
 
@@ -17,4 +19,8 @@ public interface ProductService {
     void delete(int productID);
     void deleteFromWishList(int productID);
     List<Product> getWishlist(int userId);
+    List<ProductShort> getAllProductShorts();
+    Product createProduct(ProductRequest productRequest);
+    ProductDTO productDetail(int id);
+    void updateProduct(int productID,ProductRequest productRequest);
 }

@@ -10,6 +10,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Catalog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

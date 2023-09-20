@@ -39,24 +39,34 @@ public class ProductController {
     @Autowired
     ImageService imageService;
 
-    @GetMapping
-    public List<ProductShort> getAll() {
-        List<ProductShort> listProductShort = new ArrayList<>();
-        List<Product> listPro = productService.findAll();
-        for (Product product : listPro) {
-            ProductShort productShort = new ProductShort();
-            productShort.setProductID(product.getProductID());
-            productShort.setProductName(product.getProductName());
-            productShort.setProductTitle(product.getProductTitle());
-            productShort.setImage(product.getImage());
-            productShort.setPrice(product.getPrice());
-            productShort.setCatalog(product.getCatalog().getCatalogName());
-            listProductShort.add(productShort);
-        }
-        return listProductShort;
+    @Autowired
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
-    @PostMapping
+//    @GetMapping
+//    public List<ProductShort> getAll() {
+//        List<ProductShort> listProductShort = new ArrayList<>();
+//        List<Product> listPro = productService.findAll();
+//        for (Product product : listPro) {
+//            ProductShort productShort = new ProductShort();
+//            productShort.setProductID(product.getProductID());
+//            productShort.setProductName(product.getProductName());
+//            productShort.setProductTitle(product.getProductTitle());
+//            productShort.setImage(product.getImage());
+//            productShort.setPrice(product.getPrice());
+//            productShort.setCatalog(product.getCatalog().getCatalogName());
+//            listProductShort.add(productShort);
+//        }
+//        return listProductShort;
+//    }
+
+    @GetMapping
+    public ResponseEntity<List<ProductShort>> getAll() {
+        return new ResponseEntity<>(productService.getAllProductShorts(), HttpStatus.OK);
+    }
+
+/*    @PostMapping
     public ResponseEntity<?> create(@RequestBody ProductRequest product) {
         try {
             Catalog catalog = catalogService.findById(product.getCatalogID());
@@ -79,25 +89,36 @@ public class ProductController {
             return ResponseEntity.ok(new MessageResponse("Create product successfully"));
         } catch (Exception e) {
             e.printStackTrace();
+            return Respon¬
+            seEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
+        }
+    }*/
+
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody ProductRequest product) {
+        try {
+            productService.createProduct(product);
+            return ResponseEntity.ok(new MessageResponse("Thêm mới thành công"));
+        } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
         }
-
     }
 
     @GetMapping("/delete/{productID}")
     public ResponseEntity<?> delete(@PathVariable("productID") int productID) {
         Product product = productService.findById(productID);
-        if (product.isProductStatus()==true){
+        if (product.isProductStatus() == true) {
             product.setProductStatus(false);
             productService.saveOrUpdate(product);
             return ResponseEntity.ok(new MessageResponse("Delete product success"));
-        }else {
+        } else {
             return ResponseEntity.ok(new MessageResponse("delete product No success"));
         }
 
     }
 
-    @GetMapping("/detail/{productID}")
+/*    @GetMapping("/detail/{productID}")
     public ProductDTO findById(@PathVariable("productID") int productID) {
         Product product = productService.findById(productID);
         ProductDTO productDTO = new ProductDTO();
@@ -111,10 +132,20 @@ public class ProductController {
         productDTO.setCatalog(product.getCatalog().getCatalogName());
         productDTO.getListImageLink().addAll(product.getListImageLink());
         return productDTO;
+    }*/
+
+    @GetMapping("/detail/{productID}")
+    public ResponseEntity<?> findById(@PathVariable("productID") int productID) {
+        try {
+            ProductDTO productDTO = productService.productDetail(productID);
+            return ResponseEntity.ok(productDTO);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Không thể tìm thấy sản phẩm"));
+        }
     }
 
-
-    @PutMapping("/{productID}")
+/*    @PutMapping("/{productID}")
     public ResponseEntity<?> update(@PathVariable("productID") int productID, @RequestBody ProductRequest product) {
         try {
             Catalog catalog = catalogService.findById(product.getCatalogID());
@@ -141,7 +172,19 @@ public class ProductController {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
         }
+    } */
+
+    @PutMapping("/{productID}")
+    public ResponseEntity<?> update(@PathVariable("productID") int productID, @RequestBody ProductRequest product) {
+        try {
+            productService.updateProduct(productID, product);
+            return ResponseEntity.ok(new MessageResponse("Update product successfully"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
+        }
     }
+
 
     @GetMapping("/{productName}")
     public List<Product> searchByName(@PathVariable("productName") String productName) {

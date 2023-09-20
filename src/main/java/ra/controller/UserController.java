@@ -12,20 +12,18 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.web.bind.annotation.*;
 import ra.jwt.JwtTokenProvider;
 import ra.model.entity.ERole;
-import ra.model.entity.Product;
 import ra.model.entity.Roles;
 import ra.model.entity.Users;
 import ra.model.service.ProductService;
 import ra.model.service.RoleService;
 import ra.model.service.UserService;
-import ra.model.service.serviceImp.CartServiceImp;
+import ra.model.service.serviceImp.MailService;
 import ra.payload.request.ChangePasswordRequest;
 import ra.payload.request.LoginRequest;
 import ra.payload.request.SignupRequest;
 import ra.payload.request.UserUpdateRequest;
 import ra.payload.response.JwtResponse;
 import ra.payload.response.MessageResponse;
-import ra.payload.response.ProductShort;
 import ra.payload.response.UserResponse;
 import ra.security.CustomUserDetails;
 
@@ -51,6 +49,8 @@ public class UserController {
     private PasswordEncoder encoder;
     @Autowired
     ProductService productService;
+    @Autowired
+    private MailService mailService;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -86,7 +86,7 @@ public class UserController {
         return userService.searchUserByName(username);
     }
 
-    @PostMapping("/signup")
+/*    @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
         if (userService.existsByUserName(signupRequest.getUsername())) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already"));
@@ -126,6 +126,20 @@ public class UserController {
         }
         user.setListRoles(listRoles);
         userService.saveOrUpdate(user);
+        return ResponseEntity.ok(new MessageResponse("User registered successfully"));
+    }  */
+
+    @PostMapping("/signup")
+    public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
+        if (userService.existsByUserName(signupRequest.getUsername())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already"));
+        }
+        if (userService.existsByEmail(signupRequest.getEmail())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already"));
+        }
+        userService.register(signupRequest);
+        String emailContent = "<p style=\"color: blue; font-size: 16px;\">Bạn đã đăng ký thành công</p>";
+        mailService.sendMail(signupRequest.getEmail(),"RegisterSuccess",emailContent);
         return ResponseEntity.ok(new MessageResponse("User registered successfully"));
     }
 
@@ -194,7 +208,7 @@ public class UserController {
     @GetMapping("/myAccount")
     @PreAuthorize("hasRole('USER')")
     public UserResponse getUser() {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+     /*   CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Users users = userService.getUserByID(userDetails.getUserId());
         UserResponse userResponse = new UserResponse();
         userResponse.setUserId(users.getUserId());
@@ -202,8 +216,8 @@ public class UserController {
         userResponse.setCreated(users.getCreated());
         userResponse.setPhone(users.getPhone());
         userResponse.setAddress(users.getAddress());
-        userResponse.setEmail(users.getEmail());
-        return userResponse;
+        userResponse.setEmail(users.getEmail());*/
+        return userService.myAccount();
     }
 
     @PostMapping("/logout")

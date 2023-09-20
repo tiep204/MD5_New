@@ -7,8 +7,7 @@ import ra.model.entity.Order;
 import java.util.List;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order,Integer> {
+public interface OrderRepository extends JpaRepository<Order, Integer> {
     Order searchOrderByUsers_UserId(int userId);
-Order findByUsers_UserId(int userId);
-
+    List<Order> findByUsers_UserId(int userId);
 }

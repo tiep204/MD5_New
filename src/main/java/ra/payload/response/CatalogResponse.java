@@ -9,14 +9,14 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class OrderResponse {
-    private int orderID;
-    private float totalAmount;
-    private String orderStatus;
+public class CatalogResponse {
+    private int catalogID;
+    private String catalogName;
+    private String catalogTitle;
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Date created;
-    private int usersId;
+    private boolean catalogStatus;
 }

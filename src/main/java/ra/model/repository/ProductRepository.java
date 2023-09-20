@@ -4,10 +4,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ra.model.entity.Product;
 import ra.payload.response.ProductDTO;
+import ra.payload.response.ProductShort;
 
 import java.util.List;
 
@@ -15,8 +17,9 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product,Integer> {
     List<Product> searchByProductNameContaining(String productName);
 
-
-    @Query(value = "select p.id,p.product_name,p.price,p.title,p.image,p.catalog_id from product p join wishlist w on p.id = w.product_id where w.user_id = :uID",nativeQuery = true)
-    List<Product> getAllWishList(@Param("uID") int userId);
-
+    @Query(value = "SELECT p.id,p.description,p.status,p.quantity ,p.product_name, p.price, p.title, p.image, p.catalog_id " +
+            "FROM product p " +
+            "JOIN wishlist w ON p.id = w.product_id " +
+            "WHERE w.user_id = :userId", nativeQuery = true)
+    List<Product> findProductsInWishlist(@Param("userId") int userId);
 }

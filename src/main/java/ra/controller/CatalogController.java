@@ -11,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ra.model.entity.Catalog;
 import ra.model.service.CatalogService;
+import ra.payload.request.CatalogRequest;
+import ra.payload.response.CatalogResponse;
 import ra.payload.response.MessageResponse;
 
 import java.text.SimpleDateFormat;
@@ -25,8 +27,9 @@ public class CatalogController {
     CatalogService catalogService;
 
     @GetMapping
-    public List<Catalog> getAll() {
-        return catalogService.findAll();
+    public ResponseEntity<List<CatalogResponse>> getAll() {
+
+        return new ResponseEntity<>( catalogService.findAll(),HttpStatus.OK);
     }
 
     @GetMapping("/{catalogID}")
@@ -35,8 +38,8 @@ public class CatalogController {
     }
 
     @PostMapping
-    public Catalog create(@RequestBody Catalog catalog) {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+    public ResponseEntity<Catalog> create(@RequestBody Catalog catalog) {
+/*        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         Date dateNow = new Date();
         String strNow = sdf.format(dateNow);
         try {
@@ -44,11 +47,11 @@ public class CatalogController {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        catalog.setCatalogStatus(true);
-        return catalogService.saveOrUpdate(catalog);
+        catalog.setCatalogStatus(true);*/
+        return new ResponseEntity<>(catalogService.save(catalog), HttpStatus.OK);
     }
 
-    @PutMapping("/{catalogID}")
+/*    @PutMapping("/{catalogID}")
     public Catalog updateCatalog(@PathVariable("catalogID") int catalogID, @RequestBody Catalog catalog) {
         Catalog catalogUpdate = catalogService.findById(catalogID);
         catalogUpdate.setCatalogName(catalog.getCatalogName());
@@ -56,6 +59,12 @@ public class CatalogController {
         catalogUpdate.setCatalogStatus(catalog.isCatalogStatus());
         catalogUpdate.setCreated(catalogUpdate.getCreated());
         return catalogService.saveOrUpdate(catalogUpdate);
+    }*/
+
+    @PutMapping("/{catalogID}")
+    public ResponseEntity<CatalogResponse> updateCatalog(@PathVariable("catalogID") int catalogID, @RequestBody CatalogRequest catalog) {
+        CatalogResponse catalogUpdate = catalogService.update(catalog,catalogID);
+        return new ResponseEntity<>(catalogUpdate,HttpStatus.OK);
     }
 
     @GetMapping("/delete/{catalogID}")
