@@ -75,13 +75,16 @@ public class CartServiceImp implements CartService {
         }
     }
 
-    @Override
+    /*@Override
     public void createCart(CartRequest cartRequest) throws EntityExistsException {
         boolean check = false;
         Cart cart = new Cart();
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Cart> listCart = findAllUserCartById(userDetails.getUserId());
         Product product = productService.findById(cartRequest.getProductID());
+        if (product.isProductStatus()==false){
+            throw new EntityExistsException("Sản phẩm này đã ngừng bán");
+        }
         Users users = userService.getUserByID(userDetails.getUserId());
         for (Cart cartExist : listCart) {
             if (cartExist.getProduct().getProductID() == product.getProductID()) {
@@ -112,5 +115,52 @@ public class CartServiceImp implements CartService {
                 throw new EntityExistsException("Số lượng hàng còn lại trong kho không đủ! Vui lòng chọn lại");
             }
         }
+    }*/
+
+    @Override
+    public void createCart(CartRequest cartRequest) throws EntityExistsException {
+        boolean check = false;
+        Cart cart = new Cart();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Cart> listCart = findAllUserCartById(userDetails.getUserId());
+        Product product = productService.findById(cartRequest.getProductID());
+        if (product.isProductStatus() == false) {
+            throw new EntityExistsException("Sản phẩm này đã ngừng bán");
+        }
+        Users users = userService.getUserByID(userDetails.getUserId());
+
+        // Kiểm tra nếu quantity không được nhập, đặt mặc định là 1
+        int quantity = (cartRequest.getQuantity() > 0) ? cartRequest.getQuantity() : 1;
+
+        for (Cart cartExist : listCart) {
+            if (cartExist.getProduct().getProductID() == product.getProductID()) {
+                cart = cartExist;
+                check = true;
+                break;
+            }
+        }
+        if (check) {
+            if (quantity <= product.getQuantity()) {
+                System.out.println(quantity);
+                cart.setQuantity(quantity + cart.getQuantity());
+                cart.setTotalPrice(cart.getProduct().getPrice() * cart.getQuantity());
+                insertCart(cart);
+            } else {
+                throw new EntityExistsException("Số lượng hàng còn lại trong kho không đủ! Vui lòng chọn lại");
+            }
+        } else {
+            if (quantity <= product.getQuantity()) {
+                Cart cartNew = new Cart();
+                cartNew.setQuantity(quantity);
+                cartNew.setUsers(users);
+                cartNew.setProduct(product);
+                cartNew.setPrice(product.getPrice());
+                cartNew.setTotalPrice(cartNew.getProduct().getPrice() * cartNew.getQuantity());
+                insertCart(cartNew);
+            } else {
+                throw new EntityExistsException("Số lượng hàng còn lại trong kho không đủ! Vui lòng chọn lại");
+            }
+        }
     }
+
 }

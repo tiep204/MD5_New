@@ -2,13 +2,19 @@ package ra.model.service.serviceImp;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.CachingUserDetailsService;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
 import ra.Excreption.RegisterException;
 import ra.model.entity.ERole;
+import ra.model.entity.PasswordResetToken;
 import ra.model.entity.Roles;
 import ra.model.entity.Users;
+import ra.model.repository.ForgotPassRepository;
 import ra.model.repository.UserRepository;
 import ra.model.service.RoleService;
 import ra.model.service.UserService;
@@ -17,13 +23,12 @@ import ra.payload.request.UserUpdateRequest;
 import ra.payload.response.MessageResponse;
 import ra.payload.response.UserResponse;
 import ra.security.CustomUserDetails;
+import ra.security.CustomUserDetailsService;
 
 import javax.persistence.EntityExistsException;
+import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class UserServiceImp implements UserService {
@@ -33,6 +38,12 @@ public class UserServiceImp implements UserService {
     private RoleService roleService;
     @Autowired
     private PasswordEncoder encoder;
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+    @Autowired
+    private ForgotPassRepository forgotPassRepository;
+    @Autowired
+    private MailService mailService;
 
     @Override
     public Users findByUserName(String userName) {
@@ -180,5 +191,85 @@ public class UserServiceImp implements UserService {
             throw new EntityExistsException("Error: Mật khẩu phải có ít nhất 6 ký tự");
         }
         return null;
+    }
+
+    @Override
+    public boolean forgotPassword(String userEmail, HttpServletRequest request) {
+        // Kiểm tra xem người dùng tồn tại trong hệ thống dựa trên địa chỉ email
+        if (existsByEmail(userEmail)) {
+            // Lấy thông tin người dùng dựa trên địa chỉ email
+            Users users = findByEmail(userEmail);
+            // Tải thông tin người dùng chi tiết (UserDetails) dựa trên tên người dùng (username)
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(users.getUserName());
+            // Tạo một đối tượng để đại diện cho việc xác thực người dùng
+            // và đặt thông tin chi tiết về yêu cầu xác thực từ đối tượng HttpServletRequest
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            // Đặt thông tin xác thực của người dùng vào SecurityContextHolder
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // Tạo một mã thông báo (token) ngẫu nhiên
+            String token = UUID.randomUUID().toString();
+            // Tạo một đối tượng PasswordResetToken và đặt giá trị mã thông báo cho nó
+            PasswordResetToken myToken = new PasswordResetToken();
+            // Đặt người dùng liên quan đến mã thông báo
+            myToken.setToken(token);
+            // Gửi email chứa mã thông báo đến địa chỉ email của người dùng
+            String mess = "token is valid for 5 minutes.\n" + "Your token: " + token;
+            myToken.setUsers(users);
+            // Lấy thời gian hiện tại
+            Date now = new Date();
+            // Đặt thời gian bắt đầu của mã thông báo
+            myToken.setStartDate(now);
+            // Lưu hoặc cập nhật mã thông báo trong cơ sở dữ liệu
+            saveOrUpdate(myToken);
+            mailService.sendSimpleMessage(users.getEmail(),
+                    "Reset your password", mess);
+            // Trả về true để chỉ ra rằng quá trình đã hoàn tất thành công
+            return true;
+        } else {
+            // Nếu không tìm thấy người dùng, trả về false
+            return false;
+        }
+    }
+
+    @Override
+    public Users findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+
+    @Override
+    public PasswordResetToken saveOrUpdate(PasswordResetToken passwordResetToken) {
+        return forgotPassRepository.save(passwordResetToken);
+    }
+
+    @Override
+    public PasswordResetToken getLastTokenByUserId(int userId) {
+        return forgotPassRepository.getLastTokenByUserId(userId);
+    }
+
+    @Override
+    public int changePassword(String token, String newPassword) {
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        PasswordResetToken passwordResetToken = getLastTokenByUserId(userDetails.getUserId());
+        long date1 = passwordResetToken.getStartDate().getTime() + 1800000;
+        long date2 = new Date().getTime();
+        if (date2 > date1) {
+            return 1;
+        } else {
+            if (passwordResetToken.getToken().equals(token)) {
+                Users users = findByUserId(userDetails.getUserId());
+                users.setPassword(encoder.encode(newPassword));
+                saveOrUpdate(users);
+                return 2;
+            } else {
+                return 3;
+            }
+        }
+    }
+
+    @Override
+    public Users findByUserId(int userID) {
+        return userRepository.findById(userID).get();
     }
 }

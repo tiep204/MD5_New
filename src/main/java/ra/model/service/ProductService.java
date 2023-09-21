@@ -32,6 +32,7 @@ public interface ProductService {
     List<Product> getWishlist(int userId);
 
     List<ProductShort> getAllProductShorts();
+    List<ProductShort> getAllProductShortsAdmin();
 
     ProductDTO createProduct(ProductRequest productRequest);
 

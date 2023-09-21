@@ -6,11 +6,9 @@ import org.springframework.stereotype.Service;
 import ra.model.entity.Cart;
 import ra.model.entity.Order;
 import ra.model.entity.OrderDetails;
+import ra.model.entity.Product;
 import ra.model.repository.OrderDetailsRepo;
-import ra.model.service.CartService;
-import ra.model.service.OrderDetailsService;
-import ra.model.service.OrderService;
-import ra.model.service.UserService;
+import ra.model.service.*;
 import ra.payload.response.OrderDetailsResponse;
 import ra.security.CustomUserDetails;
 
@@ -28,6 +26,8 @@ public class OrderDetailsServiceImp implements OrderDetailsService {
     UserService userService;
     @Autowired
     OrderService orderService;
+    @Autowired
+    ProductService productService;
     @Override
     public List<OrderDetails> getAllOrderDetails(int orderID) {
         return orderDetailsRepo.findByOrder_OrderID(orderID);
@@ -38,7 +38,7 @@ public class OrderDetailsServiceImp implements OrderDetailsService {
         return orderDetailsRepo.save(orderDetails);
     }
 
-    @Override
+/*    @Override
     public void saveOrder() {
         Order order = new Order();
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -73,7 +73,55 @@ public class OrderDetailsServiceImp implements OrderDetailsService {
         for (Cart cart : listCart) {
             cartService.delete(cart.getCartID());
         }
+    }*/
+
+    @Override
+    public void saveOrder() {
+        Order order = new Order();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Cart> listCart = cartService.findAllUserCartById(userDetails.getUserId());
+        List<OrderDetails> listOrderDetails = new ArrayList<>();
+        float totalAmount = 0f;
+        for (Cart cart : listCart) {
+            totalAmount += cart.getTotalPrice();
+        }
+        order.setOrderStatus("Pending");
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date dateNow = new Date();
+        String strNow = sdf.format(dateNow);
+        try {
+            order.setCreated(sdf.parse(strNow));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        order.setUsers(userService.getUserByID(userDetails.getUserId()));
+        order.setTotalAmount(totalAmount);
+        orderService.save(order);
+
+        // Trừ số lượng sản phẩm sau khi đơn hàng đã được lưu
+        for (Cart cart : listCart) {
+            OrderDetails orderDetails = new OrderDetails();
+            orderDetails.setOrder(order);
+            orderDetails.setQuantity(cart.getQuantity());
+            orderDetails.setProduct(cart.getProduct());
+            orderDetails.setPrice(cart.getPrice());
+            orderDetails.setTotal(cart.getProduct().getPrice() * cart.getQuantity());
+            save(orderDetails);
+            listOrderDetails.add(orderDetails);
+
+            // Trừ số lượng sản phẩm từ số tồn kho
+            Product product = cart.getProduct();
+            int remainingQuantity = product.getQuantity() - cart.getQuantity();
+            product.setQuantity(remainingQuantity);
+            productService.saveOrUpdate(product);
+        }
+
+        // Sau khi đã xử lý đơn hàng, bạn có thể xóa giỏ hàng của người dùng
+        for (Cart cart : listCart) {
+            cartService.delete(cart.getCartID());
+        }
     }
+
 
     @Override
     public List<OrderDetailsResponse> getAllOrderDetail(int orderID) {

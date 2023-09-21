@@ -14,9 +14,9 @@ import ra.payload.response.ProductShort;
 import java.util.List;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product,Integer> {
+public interface ProductRepository extends JpaRepository<Product, Integer> {
     List<Product> searchByProductNameContaining(String productName);
-
+    
     @Query(value = "SELECT p.id,p.description,p.status,p.quantity ,p.product_name, p.price, p.title, p.image, p.catalog_id " +
             "FROM product p " +
             "JOIN wishlist w ON p.id = w.product_id " +

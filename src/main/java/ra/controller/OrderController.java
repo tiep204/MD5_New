@@ -18,9 +18,7 @@ import ra.payload.response.MessageResponse;
 import ra.payload.response.OrderResponse;
 import ra.security.CustomUserDetails;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -40,7 +38,7 @@ public class OrderController {
     private MailService mailService;
 
 
-    ///Admin duyetj đơn hàng
+    ///Admin duyet đơn hàng
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/{orderID}")
     public ResponseEntity<?> updateOrderStatusToAdmit(@PathVariable("orderID") int orderID) {
@@ -249,5 +247,53 @@ public class OrderController {
     @GetMapping("/{orderID}")
     public ResponseEntity<?> getAllOrderDetails(@PathVariable("orderID") int orderID) {
         return new ResponseEntity<>(orderDetailsService.getAllOrderDetail(orderID), HttpStatus.OK);
+    }
+
+    // nhung don hang chua duoc duyet
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getAllPending() {
+        List<OrderResponse> orderResponseList = orderService.adminGetAllPending();
+        return new ResponseEntity<>(orderResponseList, HttpStatus.OK);
+    }
+
+    //Nhung don hang da duoc duyet
+    @GetMapping("/accepted")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getAllAccepted() {
+        List<OrderResponse> orderResponseList = orderService.adminGetAllAccepted();
+        return new ResponseEntity<>(orderResponseList, HttpStatus.OK);
+    }
+
+    //nhung don hang dang van chuyen
+    @GetMapping("/delivery")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getAllDelivery() {
+        List<OrderResponse> orderResponseList = orderService.adminGetAllDelivery();
+        return new ResponseEntity<>(orderResponseList, HttpStatus.OK);
+    }
+
+    //nhung don hang nguoi dung da nhan duoc
+    @GetMapping("/OK")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getAllOK() {
+        List<OrderResponse> orderResponseList = orderService.adminGetAllOK();
+        return new ResponseEntity<>(orderResponseList, HttpStatus.OK);
+    }
+
+    // nhung don hang da bi admin huy
+    @GetMapping("/adminCancel")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getAllAdminCancel() {
+        List<OrderResponse> orderResponseList = orderService.adminGetAllCancel();
+        return new ResponseEntity<>(orderResponseList, HttpStatus.OK);
+    }
+
+    //nhung don hang da duoc nguoi dung huy
+    @GetMapping("/userCancel")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getAllUserCancel() {
+        List<OrderResponse> orderResponseList = orderService.adminGetAllUserCancel();
+        return new ResponseEntity<>(orderResponseList, HttpStatus.OK);
     }
 }

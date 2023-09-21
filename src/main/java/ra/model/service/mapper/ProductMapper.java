@@ -22,6 +22,9 @@ public class ProductMapper implements IGenericMapper<Product, ProductRequest, Pr
                 .quantity(productRequest.getQuantity())
                 .productTitle(productRequest.getProductTitle())
                 .descriptions(productRequest.getDescriptions())
+/*
+                .productStatus(productRequest.isProductStatus())
+*/
                 .image(String.valueOf(productRequest.getListImageLink()))
                 .catalog(catalogService.findById(productRequest.getCatalogID()))
                 .build();

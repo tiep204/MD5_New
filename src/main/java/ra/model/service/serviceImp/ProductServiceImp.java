@@ -105,16 +105,34 @@ public class ProductServiceImp implements ProductService {
     public List<ProductShort> getAllProductShorts() {
         List<Product> listPro = productRepository.findAll();
         List<ProductShort> listProductShort = new ArrayList<>();
-
         for (Product product : listPro) {
-            ProductShort productShort = new ProductShort();
-            productShort.setProductID(product.getProductID());
-            productShort.setProductName(product.getProductName());
-            productShort.setProductTitle(product.getProductTitle());
-            productShort.setImage(product.getImage());
-            productShort.setPrice(product.getPrice());
-            productShort.setCatalog(product.getCatalog().getCatalogName());
-            listProductShort.add(productShort);
+            if (product.isProductStatus()==true){
+                ProductShort productShort = new ProductShort();
+                productShort.setProductID(product.getProductID());
+                productShort.setProductName(product.getProductName());
+                productShort.setProductTitle(product.getProductTitle());
+                productShort.setImage(product.getImage());
+                productShort.setPrice(product.getPrice());
+                productShort.setCatalog(product.getCatalog().getCatalogName());
+                listProductShort.add(productShort);
+            }
+        }
+        return listProductShort;
+    }
+
+    @Override
+    public List<ProductShort> getAllProductShortsAdmin() {
+        List<Product> listPro = productRepository.findAll();
+        List<ProductShort> listProductShort = new ArrayList<>();
+        for (Product product : listPro) {
+                ProductShort productShort = new ProductShort();
+                productShort.setProductID(product.getProductID());
+                productShort.setProductName(product.getProductName());
+                productShort.setProductTitle(product.getProductTitle());
+                productShort.setImage(product.getImage());
+                productShort.setPrice(product.getPrice());
+                productShort.setCatalog(product.getCatalog().getCatalogName());
+                listProductShort.add(productShort);
         }
         return listProductShort;
     }
@@ -151,6 +169,7 @@ public class ProductServiceImp implements ProductService {
     public ProductDTO createProduct(ProductRequest productRequest) {
         try {
             Product product = productMapper.toEntity(productRequest);
+            product.setProductStatus(true);
             List<String> stringList = new ArrayList<>();
 
             for (MultipartFile str : productRequest.getListImageLink()) {

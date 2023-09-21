@@ -44,27 +44,19 @@ public class ProductController {
         this.productService = productService;
     }
 
-//    @GetMapping
-//    public List<ProductShort> getAll() {
-//        List<ProductShort> listProductShort = new ArrayList<>();
-//        List<Product> listPro = productService.findAll();
-//        for (Product product : listPro) {
-//            ProductShort productShort = new ProductShort();
-//            productShort.setProductID(product.getProductID());
-//            productShort.setProductName(product.getProductName());
-//            productShort.setProductTitle(product.getProductTitle());
-//            productShort.setImage(product.getImage());
-//            productShort.setPrice(product.getPrice());
-//            productShort.setCatalog(product.getCatalog().getCatalogName());
-//            listProductShort.add(productShort);
-//        }
-//        return listProductShort;
-//    }
-
     @GetMapping
+/*
+    @PreAuthorize("hasRole('ADMIN')")
+*/
     public ResponseEntity<List<ProductShort>> getAll() {
-        return new ResponseEntity<>(productService.getAllProductShorts(), HttpStatus.OK);
+        return new ResponseEntity<>(productService.getAllProductShortsAdmin(), HttpStatus.OK);
     }
+
+/*    @GetMapping("/user")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<ProductShort>> getAllProduct() {
+        return new ResponseEntity<>(productService.getAllProductShorts(), HttpStatus.OK);
+    }*/
 
 /*    @PostMapping
     public ResponseEntity<?> create(@RequestBody ProductRequest product) {
@@ -95,6 +87,7 @@ public class ProductController {
     }*/
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> create(@ModelAttribute ProductRequest product) {
         try {
             productService.createProduct(product);
@@ -105,36 +98,9 @@ public class ProductController {
         }
     }
 
- /*    @PutMapping("/{productID}")
-    public ResponseEntity<?> update(@PathVariable("productID") int productID, @RequestBody ProductRequest product) {
-        try {
-            Catalog catalog = catalogService.findById(product.getCatalogID());
-            Product productUpdate = productService.findById(productID);
-            productUpdate.setProductName(product.getProductName());
-            productUpdate.setProductTitle(product.getProductTitle());
-            productUpdate.setPrice(product.getPrice());
-            productUpdate.setQuantity(product.getQuantity());
-            productUpdate.setImage(product.getImage());
-            productUpdate.setDescriptions(product.getDescriptions());
-            productUpdate.setProductStatus(product.isProductStatus());
-            productUpdate.setCatalog(catalog);
-            for (ProductImage image : productUpdate.getListImageLink()) {
-                imageService.delete(image.getIdImage());
-            }
-            for (String str : product.getListImageLink()) {
-                ProductImage image = new ProductImage();
-                image.setUrlImage(str);
-                image.setProduct(productUpdate);
-                imageService.save(image);
-            }
-            return ResponseEntity.ok(new MessageResponse("Update product successfully"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
-        }
-    } */
 
     @PutMapping("/{productID}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> update(@PathVariable("productID") int productID, @ModelAttribute ProductRequest product) {
         try {
             productService.updateProduct(productID, product);
@@ -152,6 +118,7 @@ public class ProductController {
     }
 
     @GetMapping("/delete/{productID}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> delete(@PathVariable("productID") int productID) {
         Product product = productService.findById(productID);
         if (product.isProductStatus() == true) {
@@ -164,22 +131,6 @@ public class ProductController {
 
     }
 
-/*    @GetMapping("/detail/{productID}")
-    public ProductDTO findById(@PathVariable("productID") int productID) {
-        Product product = productService.findById(productID);
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setProductName(product.getProductName());
-        productDTO.setProductTitle(product.getProductTitle());
-        productDTO.setDescriptions(product.getDescriptions());
-        productDTO.setPrice(product.getPrice());
-        productDTO.setQuantity(product.getQuantity());
-        productDTO.setImage(product.getImage());
-        productDTO.setProductStatus(product.isProductStatus());
-        productDTO.setCatalog(product.getCatalog().getCatalogName());
-        productDTO.getListImageLink().addAll(product.getListImageLink());
-        return productDTO;
-    }*/
-
     @GetMapping("/detail/{productID}")
     public ResponseEntity<?> findById(@PathVariable("productID") int productID) {
         try {
@@ -191,25 +142,11 @@ public class ProductController {
         }
     }
 
-//    @GetMapping("/paging")
-//    public ResponseEntity<?> getPaging(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "2") int size) {
-//        Pageable pageable = PageRequest.of(page, size);
-//        Page<Product> products = productService.getPaging(pageable);
-//        Map<String, Object> data = new HashMap<>();
-//        data.put("products", products.getContent());
-//        data.put("total", products.getSize());
-//        data.put("totalItems", products.getTotalElements());
-//        data.put("totalPages", products.getTotalPages());
-//        return new ResponseEntity<>(data, HttpStatus.OK);
-//    }
-
     @GetMapping("/paging")
     public ResponseEntity<?> getPaging(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "2") int size) {
-       Map<String,Object> data = productService.paging(page,size);
+        Map<String, Object> data = productService.paging(page, size);
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 }
