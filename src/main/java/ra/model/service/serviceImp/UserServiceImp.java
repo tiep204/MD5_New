@@ -1,10 +1,11 @@
 package ra.model.service.serviceImp;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ra.Excreption.RegisterException;
 import ra.model.entity.ERole;
 import ra.model.entity.Roles;
 import ra.model.entity.Users;
@@ -12,9 +13,12 @@ import ra.model.repository.UserRepository;
 import ra.model.service.RoleService;
 import ra.model.service.UserService;
 import ra.payload.request.SignupRequest;
+import ra.payload.request.UserUpdateRequest;
+import ra.payload.response.MessageResponse;
 import ra.payload.response.UserResponse;
 import ra.security.CustomUserDetails;
 
+import javax.persistence.EntityExistsException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -46,6 +50,11 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
+    public boolean exitsByPhoneNumber(String phone) {
+        return userRepository.existsByPhone(phone);
+    }
+
+    @Override
     public Users saveOrUpdate(Users user) {
         return userRepository.save(user);
     }
@@ -66,7 +75,29 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
-    public void register(SignupRequest signupRequest) {
+    public void register(SignupRequest signupRequest) throws EntityExistsException {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
+        String phoneRegex = "^\\d{10}$";
+        String passwordRegex = "^.{6,}$";
+        if (existsByUserName(signupRequest.getUsername())) {
+            throw new EntityExistsException("Error: username đã tồn tại");
+        }
+        if (existsByEmail(signupRequest.getEmail())) {
+            throw new EntityExistsException("Error: Email đã tồn tại");
+        }
+        if (exitsByPhoneNumber(signupRequest.getPhone())){
+            throw new EntityExistsException("Error: số điện thoại của bạn đã tồn tại");
+        }
+        if (!signupRequest.getEmail().matches(emailRegex)) {
+            throw new EntityExistsException("Error: Định dạng email không hợp lệ");
+        }
+
+        if (!signupRequest.getPhone().matches(phoneRegex)) {
+            throw new EntityExistsException("Error: Định dạng số điện thoại không hợp lệ");
+        }
+        if (!signupRequest.getPassword().matches(passwordRegex)) {
+            throw new EntityExistsException("Error: Mật khẩu phải có ít nhất 6 ký tự");
+        }
         Users user = new Users();
         user.setUserName(signupRequest.getUsername());
         user.setPassword(encoder.encode(signupRequest.getPassword()));
@@ -113,5 +144,41 @@ public class UserServiceImp implements UserService {
         userResponse.setAddress(users.getAddress());
         userResponse.setEmail(users.getEmail());
         return userResponse;
+    }
+
+    @Override
+    public Users updateUserInfo(UserUpdateRequest userUpdateRequest, int id) {
+        Users users = getUserByID(id);
+        users.setEmail(userUpdateRequest.getEmail());
+        users.setAddress(userUpdateRequest.getAddress());
+        users.setPhone(userUpdateRequest.getPhone());
+        return saveOrUpdate(users);
+    }
+
+    @Override
+    public String message(SignupRequest signupRequest) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
+        String phoneRegex = "^\\d{10}$";
+        String passwordRegex = "^.{6,}$";
+        if (existsByUserName(signupRequest.getUsername())) {
+            throw new EntityExistsException("Error: username đã tồn tại");
+        }
+        if (existsByEmail(signupRequest.getEmail())) {
+            throw new EntityExistsException("Error: Email đã tồn tại");
+        }
+        if (exitsByPhoneNumber(signupRequest.getPhone())){
+            throw new EntityExistsException("Error: số điện thoại của bạn đã tồn tại");
+        }
+        if (!signupRequest.getEmail().matches(emailRegex)) {
+            throw new EntityExistsException("Error: Định dạng email không hợp lệ");
+        }
+
+        if (!signupRequest.getPhone().matches(phoneRegex)) {
+            throw new EntityExistsException("Error: Định dạng số điện thoại không hợp lệ");
+        }
+        if (!signupRequest.getPassword().matches(passwordRegex)) {
+            throw new EntityExistsException("Error: Mật khẩu phải có ít nhất 6 ký tự");
+        }
+        return null;
     }
 }

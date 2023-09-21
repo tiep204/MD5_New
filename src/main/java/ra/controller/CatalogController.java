@@ -84,7 +84,7 @@ public class CatalogController {
         return catalogService.searchByName(catalogName);
     }
 
-    @GetMapping("/paging")
+/*    @GetMapping("/paging")
     public ResponseEntity<?> getPagingAndSortByName(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "2") int size) {
@@ -97,6 +97,13 @@ public class CatalogController {
         data.put("total", catalogs.getSize());
         data.put("totalItems", catalogs.getTotalElements());
         data.put("totalPages", catalogs.getTotalPages());
+        return new ResponseEntity<>(data, HttpStatus.OK);
+    }*/
+    @GetMapping("/paging")
+    public ResponseEntity<?> getPagingAndSortByName(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "2") int size) {
+          Map<String,Object> data = catalogService.paging(page,size);
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 }

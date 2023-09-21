@@ -36,25 +36,33 @@ public class CartController {
     @Autowired
     OrderService orderService;
 
+    /*    @PreAuthorize("hasRole('USER')")
+        @GetMapping("/getCart")
+        public ResponseEntity<?> getCartByUSerID() {
+            CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            List<Cart> listCart = cartService.findAllUserCartById(userDetails.getUserId());
+            List<CartDTO> listCartDTO = new ArrayList<>();
+            for (Cart cart : listCart) {
+                CartDTO cartDTO = new CartDTO();
+                cartDTO.setCartID(cart.getCartID());
+                cartDTO.setQuantity(cart.getQuantity());
+                cartDTO.setPrice(cart.getProduct().getPrice());
+                cartDTO.setTotalPrice(cart.getTotalPrice());
+                cartDTO.setProductName(cart.getProduct().getProductName());
+                listCartDTO.add(cartDTO);
+            }
+            return ResponseEntity.ok(listCartDTO);
+        }*/
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/getCart")
     public ResponseEntity<?> getCartByUSerID() {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Cart> listCart = cartService.findAllUserCartById(userDetails.getUserId());
-        List<CartDTO> listCartDTO = new ArrayList<>();
-        for (Cart cart : listCart) {
-            CartDTO cartDTO = new CartDTO();
-            cartDTO.setCartID(cart.getCartID());
-            cartDTO.setQuantity(cart.getQuantity());
-            cartDTO.setPrice(cart.getProduct().getPrice());
-            cartDTO.setTotalPrice(cart.getTotalPrice());
-            cartDTO.setProductName(cart.getProduct().getProductName());
-            listCartDTO.add(cartDTO);
-        }
+        List<CartDTO> listCartDTO = cartService.findAllCart(listCart);
         return ResponseEntity.ok(listCartDTO);
     }
 
-    @PreAuthorize("hasRole('USER')")
+/*    @PreAuthorize("hasRole('USER')")
     @PostMapping
     public ResponseEntity<?> insertCart(@RequestBody CartRequest cartRequest) {
         try {
@@ -80,7 +88,6 @@ public class CartController {
                 } else {
                     return ResponseEntity.badRequest().body(new MessageResponse("Số lượng hàng còn lại trong kho không đủ! Vui lòng chọn lại"));
                 }
-
             } else {
                 if (cartRequest.getQuantity() <= product.getQuantity()) {
                     Cart cartNew = new Cart();
@@ -94,7 +101,19 @@ public class CartController {
                     return ResponseEntity.badRequest().body(new MessageResponse("Số lượng hàng còn lại trong kho không đủ! Vui lòng chọn lại"));
                 }
             }
-            return ResponseEntity.ok(new MessageResponse("Add product to cart successfully"));
+            return ResponseEntity.ok(new MessageResponse("Thêm sản phẩm vào giỏ hàng hành thông"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
+        }
+    }*/
+
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping
+    public ResponseEntity<?> insertCart(@RequestBody CartRequest cartRequest) {
+        try {
+            cartService.createCart(cartRequest);
+            return ResponseEntity.ok(new MessageResponse("Thêm sản phẩm vào giỏ hàng thành công"));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
@@ -113,7 +132,7 @@ public class CartController {
         }
     }
 
-    @PreAuthorize("hasRole('USER')")
+/*    @PreAuthorize("hasRole('USER')")
     @PutMapping("/{cartID}")
     public ResponseEntity<?> updateCart(@RequestParam("quantity") int quantity, @PathVariable("cartID") int cartID) {
         try {
@@ -125,6 +144,17 @@ public class CartController {
             } else {
                 cartService.delete(cartID);
             }
+            return ResponseEntity.ok(new MessageResponse("Update thanh cong"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
+        }
+    }*/
+    @PreAuthorize("hasRole('USER')")
+    @PutMapping("/{cartID}")
+    public ResponseEntity<?> updateCart(@RequestParam("quantity") int quantity, @PathVariable("cartID") int cartID) {
+        try {
+            cartService.updateCart(cartID,quantity);
             return ResponseEntity.ok(new MessageResponse("Update thanh cong"));
         } catch (Exception e) {
             e.printStackTrace();

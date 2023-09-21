@@ -22,7 +22,7 @@ public class ProductMapper implements IGenericMapper<Product, ProductRequest, Pr
                 .quantity(productRequest.getQuantity())
                 .productTitle(productRequest.getProductTitle())
                 .descriptions(productRequest.getDescriptions())
-                .image(productRequest.getImage())
+                .image(String.valueOf(productRequest.getListImageLink()))
                 .catalog(catalogService.findById(productRequest.getCatalogID()))
                 .build();
     }
@@ -39,6 +39,17 @@ public class ProductMapper implements IGenericMapper<Product, ProductRequest, Pr
                 .catalog(product.getCatalog().getCatalogName())
                 .listImageLink(product.getListImageLink())
                 .productStatus(product.isProductStatus())
+                .build();
+    }
+
+    public ProductShort toResponsee(Product product) {
+        return ProductShort.builder()
+                .productID(product.getProductID())
+                .productName(product.getProductName())
+                .price(product.getPrice())
+                .productTitle(product.getProductTitle())
+                .image(product.getImage())
+                .catalog(product.getCatalog().getCatalogName())
                 .build();
     }
 }

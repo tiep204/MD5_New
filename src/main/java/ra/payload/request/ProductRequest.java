@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +19,8 @@ public class ProductRequest {
     private int quantity;
     private String productTitle;
     private String descriptions;
-    private String image;
+    /*private String image;*/
     private int catalogID;
-    private List<String> listImageLink;
+    private List<MultipartFile> listImageLink;
     private boolean productStatus;
 }

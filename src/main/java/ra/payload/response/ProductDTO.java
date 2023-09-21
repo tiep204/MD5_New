@@ -20,6 +20,6 @@ public class ProductDTO {
     private String descriptions;
     private String image;
     private String catalog;
-    private List<ProductImage> listImageLink = new ArrayList<>();
+    private List<ProductImage> listImageLink;
     private boolean productStatus;
 }

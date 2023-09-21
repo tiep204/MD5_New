@@ -1,6 +1,8 @@
 package ra.controller;
 
+import org.apache.logging.log4j.message.Message;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -8,11 +10,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
+import ra.Excreption.RegisterException;
 import ra.jwt.JwtTokenProvider;
-import ra.model.entity.ERole;
-import ra.model.entity.Roles;
 import ra.model.entity.Users;
 import ra.model.service.ProductService;
 import ra.model.service.RoleService;
@@ -28,8 +28,6 @@ import ra.payload.response.UserResponse;
 import ra.security.CustomUserDetails;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -130,41 +128,62 @@ public class UserController {
     }  */
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
+    public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest){
+        /*String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
+        String phoneRegex = "^\\d{10}$";
+        String passwordRegex = "^.{6,}$";
         if (userService.existsByUserName(signupRequest.getUsername())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: username đã tồn tại"));
         }
         if (userService.existsByEmail(signupRequest.getEmail())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email đã tồn tại"));
         }
-        userService.register(signupRequest);
-        String emailContent = "<p style=\"color: blue; font-size: 16px;\">Bạn đã đăng ký thành công</p>";
-        mailService.sendMail(signupRequest.getEmail(),"RegisterSuccess",emailContent);
-        return ResponseEntity.ok(new MessageResponse("User registered successfully"));
+        if (userService.exitsByPhoneNumber(signupRequest.getPhone())){
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: số điện thoại của bạn đã tồn tại"));
+        }
+        if (!signupRequest.getEmail().matches(emailRegex)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Định dạng email không hợp lệ"));
+        }
+
+        if (!signupRequest.getPhone().matches(phoneRegex)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Định dạng số điện thoại không hợp lệ"));
+        }
+
+        if (!signupRequest.getPassword().matches(passwordRegex)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Mật khẩu phải có ít nhất 6 ký tự"));
+        }*/
+            userService.register(signupRequest);
+            String emailContent = "<p style=\"color: blue; font-size: 16px;\">Bạn đã đăng ký thành công</p>";
+            mailService.sendMail(signupRequest.getEmail(),"RegisterSuccess",emailContent);
+            return ResponseEntity.ok(new MessageResponse("User registered successfully"));
     }
 
     @PostMapping("/signIn")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
         Users users = userService.findByUserName(loginRequest.getUsername());
-        if (users.isUserStatus()) {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            CustomUserDetails customUserDetail = (CustomUserDetails) authentication.getPrincipal();
-            //Sinh JWT tra ve client
-            String jwt = tokenProvider.generateToken(customUserDetail);
-            //Lay cac quyen cua user
-            List<String> listRoles = customUserDetail.getAuthorities().stream()
-                    .map(item -> item.getAuthority()).collect(Collectors.toList());
-            return ResponseEntity.ok(new JwtResponse(jwt, customUserDetail.getUsername(), customUserDetail.getEmail(),
-                    customUserDetail.getPhone(), customUserDetail.getAddress(), listRoles));
-        } else {
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Account has locked"));
+        if (users!=null){
+            if (users.isUserStatus()) {
+                Authentication authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+                );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                CustomUserDetails customUserDetail = (CustomUserDetails) authentication.getPrincipal();
+                //Sinh JWT tra ve client
+                String jwt = tokenProvider.generateToken(customUserDetail);
+                //Lay cac quyen cua user
+                List<String> listRoles = customUserDetail.getAuthorities().stream()
+                        .map(item -> item.getAuthority()).collect(Collectors.toList());
+                return ResponseEntity.ok(new JwtResponse(jwt, customUserDetail.getUsername(), customUserDetail.getEmail(),
+                        customUserDetail.getPhone(), customUserDetail.getAddress(), listRoles));
+            } else {
+                return ResponseEntity.badRequest().body(new MessageResponse("Error: Tài khoản của bạn đã bị khóa"));
+            }
+        }else {
+            return ResponseEntity.badRequest().body(new MessageResponse("Tên đăng nhập hoặc tài khoản của bạn không chính xác"));
         }
     }
 
-    @PutMapping("/updateUserInfo")
+/*    @PutMapping("/updateUserInfo")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> updateUserInfo(@RequestBody UserUpdateRequest userUpdateRequest) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -179,6 +198,19 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
         }
+    }*/
+
+    @PutMapping("/updateUserInfo")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> updateUserInfo(@RequestBody UserUpdateRequest userUpdateRequest) {
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        try {
+            userService.updateUserInfo(userUpdateRequest,userDetails.getUserId());
+            return ResponseEntity.ok(new MessageResponse("Update thanh cong"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
+        }
     }
 
     @PutMapping("/changePassword")
@@ -186,7 +218,6 @@ public class UserController {
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Users users = userService.getUserByID(userDetails.getUserId());
-
         // Kiểm tra mật khẩu cũ
         if (encoder.matches(changePasswordRequest.getOldPassword(), users.getPassword())) {
             // Kiểm tra xác nhận mật khẩu mới
@@ -194,7 +225,6 @@ public class UserController {
                 // Mật khẩu mới hợp lệ, mã hóa và lưu trữ trong cơ sở dữ liệu
                 users.setPassword(encoder.encode(changePasswordRequest.getNewPassword()));
                 userService.saveOrUpdate(users);
-
                 return ResponseEntity.ok(new MessageResponse("Mật khẩu đã được thay đổi thành công."));
             } else {
                 return ResponseEntity.badRequest().body(new MessageResponse("Mật khẩu mới và xác nhận mật khẩu mới không trùng khớp!"));
@@ -203,7 +233,6 @@ public class UserController {
             return ResponseEntity.badRequest().body(new MessageResponse("Mật khẩu cũ không chính xác!"));
         }
     }
-
 
     @GetMapping("/myAccount")
     @PreAuthorize("hasRole('USER')")
@@ -220,12 +249,11 @@ public class UserController {
         return userService.myAccount();
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null) {
-            new SecurityContextLogoutHandler().logout(request, response, authentication);
-        }
-        return ResponseEntity.ok(new MessageResponse("Đã đăng xuất thành công."));
+    @DeleteMapping("/logout")
+    public ResponseEntity<?> logOut(HttpServletRequest request) {
+        request.getHeader("Authorization");
+        // Clear the authentication from server-side (in this case, Spring Security)
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.ok("Bạn đã đăng xuất");
     }
 }

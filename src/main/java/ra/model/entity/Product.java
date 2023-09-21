@@ -36,6 +36,6 @@ public class Product {
     private Catalog catalog;
     @Column(name = "status")
     private boolean productStatus;
-    @OneToMany(mappedBy = "product")
+    @OneToMany(cascade = CascadeType.ALL,mappedBy = "product")
     private List<ProductImage> listImageLink = new ArrayList<>();
 }

@@ -85,7 +85,8 @@ public class OrderController {
             return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
         }
     }
-///Admin hủy đơn hàng
+
+    ///Admin hủy đơn hàng
     @GetMapping("/cancel/{orderID}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> cancel(@PathVariable("orderID") int orderID) {
@@ -110,14 +111,14 @@ public class OrderController {
         Users users = userRepository.findById(userDetails.getUserId()).get();
         try {
             Order order = orderService.findByID(orderID);
-            if (users.getUserId()==order.getUsers().getUserId()){
+            if (users.getUserId() == order.getUsers().getUserId()) {
                 // Nêú mà đơn hàng đang chờ xác nhận thì người dùng có thể hủy đơn hàng
-                if (order.getOrderStatus().equals("Pending")){
+                if (order.getOrderStatus().equals("Pending")) {
                     order.setOrderStatus("UserCancel");
                     orderService.save(order);
                     mailService.sendMail(order.getUsers().getEmail(), "Cancel", "bạn đã hủy Đơn hàng của bạn");
-                }else {
-                    mailService.sendMail(order.getUsers().getEmail(), "Cancel", "khong thể hủy đơn hàng");
+                } else {
+                    mailService.sendMail(order.getUsers().getEmail(), "Cancel", "bạn khong thể hủy đơn hàng");
                     return ResponseEntity.ok(new MessageResponse("Đơn hàng nay khong the huy"));
                 }
             }
@@ -128,7 +129,7 @@ public class OrderController {
         }
     }
 
-    @GetMapping
+/*    @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<OrderResponse> getAllOrder() {
         List<OrderResponse> listOrder = new ArrayList<>();
@@ -145,6 +146,13 @@ public class OrderController {
             }
         }
         return listOrder;
+    }*/
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getAllOrder() {
+        List<OrderResponse> orderResponseList = orderService.adminGetAllOrder();
+        return new ResponseEntity<>(orderResponseList, HttpStatus.OK);
     }
 
     /*    @GetMapping("/userOrder")

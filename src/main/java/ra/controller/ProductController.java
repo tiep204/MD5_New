@@ -95,7 +95,7 @@ public class ProductController {
     }*/
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody ProductRequest product) {
+    public ResponseEntity<?> create(@ModelAttribute ProductRequest product) {
         try {
             productService.createProduct(product);
             return ResponseEntity.ok(new MessageResponse("Thêm mới thành công"));
@@ -103,6 +103,52 @@ public class ProductController {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
         }
+    }
+
+ /*    @PutMapping("/{productID}")
+    public ResponseEntity<?> update(@PathVariable("productID") int productID, @RequestBody ProductRequest product) {
+        try {
+            Catalog catalog = catalogService.findById(product.getCatalogID());
+            Product productUpdate = productService.findById(productID);
+            productUpdate.setProductName(product.getProductName());
+            productUpdate.setProductTitle(product.getProductTitle());
+            productUpdate.setPrice(product.getPrice());
+            productUpdate.setQuantity(product.getQuantity());
+            productUpdate.setImage(product.getImage());
+            productUpdate.setDescriptions(product.getDescriptions());
+            productUpdate.setProductStatus(product.isProductStatus());
+            productUpdate.setCatalog(catalog);
+            for (ProductImage image : productUpdate.getListImageLink()) {
+                imageService.delete(image.getIdImage());
+            }
+            for (String str : product.getListImageLink()) {
+                ProductImage image = new ProductImage();
+                image.setUrlImage(str);
+                image.setProduct(productUpdate);
+                imageService.save(image);
+            }
+            return ResponseEntity.ok(new MessageResponse("Update product successfully"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
+        }
+    } */
+
+    @PutMapping("/{productID}")
+    public ResponseEntity<?> update(@PathVariable("productID") int productID, @ModelAttribute ProductRequest product) {
+        try {
+            productService.updateProduct(productID, product);
+            return ResponseEntity.ok(new MessageResponse("Update product successfully"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
+        }
+    }
+
+
+    @GetMapping("/{productName}")
+    public List<Product> searchByName(@PathVariable("productName") String productName) {
+        return productService.searchByName(productName);
     }
 
     @GetMapping("/delete/{productID}")
@@ -137,7 +183,7 @@ public class ProductController {
     @GetMapping("/detail/{productID}")
     public ResponseEntity<?> findById(@PathVariable("productID") int productID) {
         try {
-            ProductDTO productDTO = productService.productDetail(productID);
+            ProductDTO productDTO = productService.findByIdD(productID);
             return ResponseEntity.ok(productDTO);
         } catch (RuntimeException e) {
             e.printStackTrace();
@@ -145,63 +191,25 @@ public class ProductController {
         }
     }
 
-/*    @PutMapping("/{productID}")
-    public ResponseEntity<?> update(@PathVariable("productID") int productID, @RequestBody ProductRequest product) {
-        try {
-            Catalog catalog = catalogService.findById(product.getCatalogID());
-            Product productUpdate = productService.findById(productID);
-            productUpdate.setProductName(product.getProductName());
-            productUpdate.setProductTitle(product.getProductTitle());
-            productUpdate.setPrice(product.getPrice());
-            productUpdate.setQuantity(product.getQuantity());
-            productUpdate.setImage(product.getImage());
-            productUpdate.setDescriptions(product.getDescriptions());
-            productUpdate.setProductStatus(product.isProductStatus());
-            productUpdate.setCatalog(catalog);
-            for (ProductImage image : productUpdate.getListImageLink()) {
-                imageService.delete(image.getIdImage());
-            }
-            for (String str : product.getListImageLink()) {
-                ProductImage image = new ProductImage();
-                image.setUrlImage(str);
-                image.setProduct(productUpdate);
-                imageService.save(image);
-            }
-            return ResponseEntity.ok(new MessageResponse("Update product successfully"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
-        }
-    } */
-
-    @PutMapping("/{productID}")
-    public ResponseEntity<?> update(@PathVariable("productID") int productID, @RequestBody ProductRequest product) {
-        try {
-            productService.updateProduct(productID, product);
-            return ResponseEntity.ok(new MessageResponse("Update product successfully"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(new MessageResponse("Có lỗi trong quá trình xử lý vui lòng thử lại!"));
-        }
-    }
-
-
-    @GetMapping("/{productName}")
-    public List<Product> searchByName(@PathVariable("productName") String productName) {
-        return productService.searchByName(productName);
-    }
+//    @GetMapping("/paging")
+//    public ResponseEntity<?> getPaging(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "2") int size) {
+//        Pageable pageable = PageRequest.of(page, size);
+//        Page<Product> products = productService.getPaging(pageable);
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("products", products.getContent());
+//        data.put("total", products.getSize());
+//        data.put("totalItems", products.getTotalElements());
+//        data.put("totalPages", products.getTotalPages());
+//        return new ResponseEntity<>(data, HttpStatus.OK);
+//    }
 
     @GetMapping("/paging")
     public ResponseEntity<?> getPaging(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "2") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Product> products = productService.getPaging(pageable);
-        Map<String, Object> data = new HashMap<>();
-        data.put("products", products.getContent());
-        data.put("total", products.getSize());
-        data.put("totalItems", products.getTotalElements());
-        data.put("totalPages", products.getTotalPages());
+       Map<String,Object> data = productService.paging(page,size);
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 }
